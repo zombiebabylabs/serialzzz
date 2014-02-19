@@ -12,7 +12,11 @@
 class SerialCommListener {
 public:
 	virtual ~SerialCommListener() {}
-	virtual void notify( const char * const message, int length ) = 0;
+
+	/**
+	 * A null-terminated message recieved from the UART.
+	 */
+	virtual void handleMessage( const char * const message ) = 0;
 };
 
 
