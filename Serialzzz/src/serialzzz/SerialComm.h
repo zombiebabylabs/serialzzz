@@ -66,11 +66,15 @@ public:
 	 */
 	bool writeMessage( const std::string & message );
 
+	/*
+	 * Register a callback method to receive notification from this
+	 * SerialComm's asynchronous read thread when a new message is available.
+	 */
 	void registerCallBack( std::function<void(const char* const)> fn );
 
 	/*
 	 * Register a SerialCommListener instance to receive notification from this
-	 * SerialComm's aysnchronous read thread when a new message is available.
+	 * SerialComm's asynchronous read thread when a new message is available.
 	 *
 	 * This message is invoked by the background thread directly.
 	 */
