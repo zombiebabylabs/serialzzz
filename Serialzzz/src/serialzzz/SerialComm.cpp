@@ -172,17 +172,13 @@ void SerialComm::beginAsyncRead()  {
 				// Notify all registsered listeners of the message.
 				for ( int i = 0; i < count; ++i ) {
 					char * msg = msgs[i];
-					for ( unsigned int j = 0; j < this->listeners->size(); ++j )
-					{
-						list<SerialCommListener*>::iterator it = this->listeners->begin();
-						while ( it != this->listeners->end() ) {
-							SerialCommListener* listener = *it;
-							listener->handleMessage( msg );
-							++it;
-						}
-					}
 
-					// delete msg;
+					list<SerialCommListener*>::iterator it = this->listeners->begin();
+					while ( it != this->listeners->end() ) {
+						SerialCommListener* listener = *it;
+						listener->handleMessage( msg );
+						++it;
+					}
 				}
 
 				delete * msgs;
