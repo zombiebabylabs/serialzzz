@@ -47,12 +47,14 @@ public:
 	virtual ~SerialComm();
 
 	/*
-	 * Opens the serial port, and spawns the asynchronous read thread.
+	 * Opens the serial port, and spawns the asynchronous read thread. Returns true
+	 * if the port is opened successfully.
 	 */
 	bool openPort();
 
 	/*
 	 * Interrupts and joins the asynchronous read thread, and closes the serial port.
+	 * Returns false if the port is not open.
 	 */
 	bool closePort();
 

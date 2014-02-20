@@ -110,26 +110,27 @@ bool SerialComm::openPort() {
 	::tcflush(this->fd, TCIOFLUSH);
 	::tcsetattr(this->fd, TCSANOW, &newtio);
 
+	// Setup the asynchronous reading thread...
 	this->stopPolling.store(false);
 	this->pollthread = new std::thread( &SerialComm::beginAsyncRead,this );
 	return true;
 }
 
 bool SerialComm::closePort() {
-	cout << "Closing" << endl;
-
 	if ( this->fd != -1 )
 	{
+		// Stop and clean up the asynchronous polling thread...
 		this->stopPolling.store(true);
 		this->pollthread->join();
 		delete this->pollthread;
 
+		// Close the file descriptor...
 		::close(this->fd);
 		this->fd = -1;
 
+		// Return true
 		return true;
 	}
-
 
 	return false;
 }
