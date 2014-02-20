@@ -139,7 +139,9 @@ bool SerialComm::writeMessage( const std::string &message ) {
 }
 
 void SerialComm::registerSerialCommListener( SerialCommListener *listener ) {
+	this->lock.lock();
 	this->listeners->push_back( listener );
+	this->lock.unlock();
 }
 
 void SerialComm::beginAsyncRead()  {
@@ -174,7 +176,7 @@ void SerialComm::beginAsyncRead()  {
 						list<SerialCommListener*>::iterator it = this->listeners->begin();
 						while ( it != this->listeners->end() ) {
 							SerialCommListener* listener = *it;
-							listener->notify( msg, sizeof(msg) );
+							listener->handleMessage( msg );
 							++it;
 						}
 					}

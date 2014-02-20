@@ -34,16 +34,45 @@ namespace zbl {
  */
 class SerialComm {
 public:
+	/*
+	 * Constructs a SerialComm object against the port specified in portPath, for
+	 * instance: /dev/ttyO1
+	 */
 	SerialComm( const std::string &portPath );
+
+	/*
+	 * Destructor will invoke closePort() if the file handle is still open, but it
+	 * is strongly recommended that you explicitly call closePort() when you are
+	 * finished, as this also terminates the asynchronous read.
+	 */
 	virtual ~SerialComm();
 
+	/*
+	 * Opens the serial port, and spawns the asynchronous read thread.
+	 */
 	bool openPort();
+
+	/*
+	 * Interrupts and joins the asynchronous read thread, and closes the serial port.
+	 */
 	bool closePort();
 
 	/*
-	 * Writes a message to the serial port.
+	 * Writes a message to the serial port. This method is thread-safe with
+	 * the asynchronous read, and will block if a message is currently being
+	 * read.
 	 */
 	bool writeMessage( const std::string & message );
+
+	/*
+	 * Register a SerialCommListener instance to receive notification from this
+	 * SerialComm's aysnchronous read thread when a new message is available.
+	 *
+	 * This message is invoked by the background thread directly.
+	 */
+	void registerSerialCommListener( SerialCommListener *listener );
+
+protected:
 
 	/*
 	 * When the serial port has data avaialble, this method is called to parse
@@ -55,16 +84,17 @@ public:
 	 */
 	virtual char ** parseMessage( int fd, int &messagecount );
 
-	void registerSerialCommListener( SerialCommListener *listener );
+
 private:
-	char * port;
-	int fd; // The file descriptor is set during open, so we may close it later.
+	char * port;	// The name of the serial port file, e.g.: /dev/ttyS0
+	int fd; 		// The file descriptor is set during open, so we may close it later.
 
-	std::atomic_bool stopPolling;
-	std::thread *pollthread;
-	std::mutex lock;
+	std::atomic_bool stopPolling;	// Used to interrupt the asynchronous read thread.
+	std::thread *pollthread;		// The asynchronous read thread, created during openPort()
+	std::mutex lock;				// Mutex used to synchronize the asynchronous read thread
+								    //   with writeMessage() and registerSerialCommListener()
 
-	std::list<SerialCommListener*> *listeners;
+	std::list<SerialCommListener*> *listeners;	// All listeners to receive messages.
 
 	void beginAsyncRead();
 };
