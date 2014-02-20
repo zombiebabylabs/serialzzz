@@ -59,55 +59,55 @@ bool SerialComm::openPort() {
 	struct stat termstat;
 	struct termios oldtio, newtio;
 
-	int fd = ::open(port, O_RDWR | O_NOCTTY | O_NDELAY | O_NONBLOCK);
-	int st = ::fstat(fd, &termstat);
+	this->fd = ::open(port, O_RDWR | O_NOCTTY | O_NDELAY | O_NONBLOCK);
+	if (this->fd == -1) {
+		cerr << "Could not open " << port << endl;
+		this->fd = -1;
+		return false;
+	}
 
+	int st = ::fstat(this->fd, &termstat);
 	if (st == -1) {
 		cerr << "Could not stat " << port << endl;
 		this->fd = -1;
 		return false;
-	} else if (fd == -1) {
-		cerr << "Could not open " << port << endl;
-		this->fd = -1;
-		return false;
-	} else {
-		::tcgetattr(fd, &oldtio); /* save current serial port settings */
-		::bzero(&newtio, sizeof(newtio)); /* clear the new struct for settings */
-
-		/*
-		 BAUDRATE: Set bps rate. You could also use cfsetispeed and cfsetospeed.
-		 CRTSCTS : output hardware flow control (only used if the cable has
-		 all necessary lines. See sect. 7 of Serial-HOWTO)
-		 CS8     : 8n1 (8bit,no parity,1 stopbit)
-		 CLOCAL  : local connection, no modem contol
-		 CREAD   : enable receiving characters
-		 */
-		newtio.c_cflag = B9600 | CS8 | CLOCAL | CREAD;
-
-		/*
-		 IGNPAR  : ignore bytes with parity errors
-		 ICRNL   : map CR to NL (otherwise a CR input on the other computer
-		 will not terminate input)
-		 otherwise make device raw (no other input processing)
-		 */
-		newtio.c_iflag = IGNPAR; // | ICRNL;
-
-		/*
-		 Raw output.
-		 */
-		newtio.c_oflag = 0;
-
-		/*
-		 ICANON  : enable canonical input
-		 disable all echo functionality, and don't send signals to calling program
-		 */
-		newtio.c_lflag = ICANON;
-
-		::tcflush(fd, TCIOFLUSH);
-		::tcsetattr(fd, TCSANOW, &newtio);
 	}
 
-	this->fd = fd;
+
+	::tcgetattr(this->fd, &oldtio); /* save current serial port settings */
+	::bzero(&newtio, sizeof(newtio)); /* clear the new struct for settings */
+
+	/*
+	 BAUDRATE: Set bps rate. You could also use cfsetispeed and cfsetospeed.
+	 CRTSCTS : output hardware flow control (only used if the cable has
+	 all necessary lines. See sect. 7 of Serial-HOWTO)
+	 CS8     : 8n1 (8bit,no parity,1 stopbit)
+	 CLOCAL  : local connection, no modem contol
+	 CREAD   : enable receiving characters
+	 */
+	newtio.c_cflag = B9600 | CS8 | CLOCAL | CREAD;
+
+	/*
+	 IGNPAR  : ignore bytes with parity errors
+	 ICRNL   : map CR to NL (otherwise a CR input on the other computer
+	 will not terminate input)
+	 otherwise make device raw (no other input processing)
+	 */
+	newtio.c_iflag = IGNPAR; // | ICRNL;
+
+	/*
+	 Raw output.
+	 */
+	newtio.c_oflag = 0;
+
+	/*
+	 ICANON  : enable canonical input
+	 disable all echo functionality, and don't send signals to calling program
+	 */
+	newtio.c_lflag = ICANON;
+
+	::tcflush(this->fd, TCIOFLUSH);
+	::tcsetattr(this->fd, TCSANOW, &newtio);
 
 	this->stopPolling.store(false);
 	this->pollthread = new std::thread( &SerialComm::beginAsyncRead,this );
