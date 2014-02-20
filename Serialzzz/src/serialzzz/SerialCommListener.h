@@ -4,6 +4,7 @@
  *  Created on: Feb 19, 2014
  *      Author: Timothy C. Fanelli
  *              Zombie Baby Labs
+ *              tim@fanel.li
  */
 
 #ifndef SERIALCOMMLISTENER_H_

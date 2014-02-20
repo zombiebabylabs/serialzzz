@@ -4,8 +4,7 @@
  *  Created on: Feb 17, 2014
  *      Author: Timothy C. Fanelli
  *              Zombie Baby Labs
- *
- *  Describes the base class for a serial communication ("SerialComm") object.
+ *              tim@fanel.li
  */
 
 #ifndef SERIALCOMM_H_

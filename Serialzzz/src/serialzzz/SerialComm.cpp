@@ -4,6 +4,7 @@
  *  Created on: Feb 17, 2014
  *      Author: Timothy C. Fanelli
  *              Zombie Baby Labs
+ *              tim@fanel.li
  */
 
 #include "SerialComm.h"
