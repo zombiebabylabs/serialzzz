@@ -45,6 +45,9 @@ SerialComm::~SerialComm() {
 	if ( this->listeners )
 		delete listeners;
 
+	if ( this->callbacks )
+		delete callbacks;
+
 	if ( this->lock )
 		delete lock;
 
