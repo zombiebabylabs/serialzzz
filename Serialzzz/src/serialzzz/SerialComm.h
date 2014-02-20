@@ -90,7 +90,7 @@ private:
 
 	std::atomic_bool stopPolling;	// Used to interrupt the asynchronous read thread.
 	std::thread *pollthread;		// The asynchronous read thread, created during openPort()
-	std::mutex lock;				// Mutex used to synchronize the asynchronous read thread
+	std::mutex *lock;				// Mutex used to synchronize the asynchronous read thread
 								    //   with writeMessage() and registerSerialCommListener()
 
 	std::list<SerialCommListener*> *listeners;	// All listeners to receive messages.

@@ -10,15 +10,12 @@
 #include "SerialComm.h"
 #include "SerialCommListener.h"
 
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/poll.h>
 #include <termios.h>
-#include <strings.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
-#include <stdio.h>
 
 #include <iostream>
 #include <list>
@@ -28,17 +25,16 @@ using namespace std;
 
 namespace zbl {
 SerialComm::SerialComm( const string & portPath ) {
-	char * temp = new char[ portPath.size()+1 ];
-	strncpy( temp, portPath.c_str(), portPath.size() );
-
-	this->port = temp;
 	this->fd = -1;
+	this->port = strdup( portPath.c_str() );
 	this->listeners = new std::list<SerialCommListener*>();
+	this->lock = new std::mutex();
+	this->pollthread = NULL;
 }
 
 SerialComm::~SerialComm() {
 	if ( this->fd != -1 ) {
-		cerr << "Warning: closing " << port << " in destructor... please close explicitly!" << endl;
+		cerr << "Warning: closing " << port << " in destructor... please call closePort() explicitly!" << endl;
 		closePort();
 	}
 
@@ -47,6 +43,11 @@ SerialComm::~SerialComm() {
 
 	if ( this->listeners )
 		delete listeners;
+
+	if ( this->lock )
+		delete lock;
+
+	// poll thread deleted in closePort, since it's created in openPort, for consistency.
 }
 
 /*
@@ -121,6 +122,7 @@ bool SerialComm::closePort() {
 	{
 		this->stopPolling.store(true);
 		this->pollthread->join();
+		delete this->pollthread;
 
 		::close(this->fd);
 		this->fd = -1;
@@ -133,16 +135,16 @@ bool SerialComm::closePort() {
 }
 
 bool SerialComm::writeMessage( const std::string &message ) {
-	this->lock.lock();
+	this->lock->lock();
 	::write( fd, message.c_str(), (size_t)message.size() );
-	this->lock.unlock();
+	this->lock->unlock();
 	return true;
 }
 
 void SerialComm::registerSerialCommListener( SerialCommListener *listener ) {
-	this->lock.lock();
+	this->lock->lock();
 	this->listeners->push_back( listener );
-	this->lock.unlock();
+	this->lock->unlock();
 }
 
 void SerialComm::beginAsyncRead()  {
@@ -154,7 +156,7 @@ void SerialComm::beginAsyncRead()  {
 
 	do  {
 		// Lock to prevent writes while we're checking for incoming... write should also lock.
-		this->lock.lock();
+		this->lock->lock();
 
 		// Poll the serial port -- blocks for 1000ms.
 		int pollrc = ::poll( &fds[0], 1, 1000 );
@@ -185,7 +187,7 @@ void SerialComm::beginAsyncRead()  {
 			}
 		}
 
-		this->lock.unlock();
+		this->lock->unlock();
 
 		interrupt = this->stopPolling.load();
 	} while ( ! interrupt );
