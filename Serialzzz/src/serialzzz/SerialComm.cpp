@@ -28,6 +28,7 @@ SerialComm::SerialComm( const string & portPath ) {
 	this->fd = -1;
 	this->port = strdup( portPath.c_str() );
 	this->listeners = new std::list<SerialCommListener*>();
+	this->callbacks = new std::list<std::function<void(const char * const)>>;
 	this->lock = new std::mutex();
 	this->pollthread = NULL;
 }
@@ -148,6 +149,12 @@ void SerialComm::registerSerialCommListener( SerialCommListener *listener ) {
 	this->lock->unlock();
 }
 
+void SerialComm::registerCallBack( std::function<void(const char* const)> fn ) {
+	this->lock->lock();
+	this->callbacks->push_back(fn);
+	this->lock->unlock();
+}
+
 void SerialComm::beginAsyncRead()  {
 	struct pollfd fds[1];
 	fds[0].fd = this->fd;
@@ -182,6 +189,16 @@ void SerialComm::beginAsyncRead()  {
 						listener->handleMessage( msg );
 						++it;
 					}
+
+					list<std::function<void(const char* const)>>::iterator iter = this->callbacks->begin();
+					while ( iter != this->callbacks->end() ) {
+						std::function<void(const char* const)> fn = *iter;
+						fn(msg);
+
+						++iter;
+					}
+
+
 				}
 
 				delete * msgs;

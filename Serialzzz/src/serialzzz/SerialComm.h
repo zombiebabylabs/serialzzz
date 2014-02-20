@@ -20,6 +20,7 @@
 #include <atomic>
 #include <mutex>
 #include <list>
+#include <functional>
 
 #include "SerialCommListener.h"
 
@@ -65,6 +66,8 @@ public:
 	 */
 	bool writeMessage( const std::string & message );
 
+	void registerCallBack( std::function<void(const char* const)> fn );
+
 	/*
 	 * Register a SerialCommListener instance to receive notification from this
 	 * SerialComm's aysnchronous read thread when a new message is available.
@@ -96,6 +99,7 @@ private:
 								    //   with writeMessage() and registerSerialCommListener()
 
 	std::list<SerialCommListener*> *listeners;	// All listeners to receive messages.
+	std::list<std::function<void(const char * const)> > *callbacks;
 
 	void beginAsyncRead();
 };
